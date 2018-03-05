@@ -1,0 +1,7 @@
+syntax = "proto3";
+package rpc;
+
+message CallDesc {
+  int32 FuncID = 1;
+  bytes Msg = 2;
+}
