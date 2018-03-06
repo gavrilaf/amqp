@@ -1,7 +1,7 @@
 package rpc
 
 import (
-	//"fmt"
+	"fmt"
 	"github.com/streadway/amqp"
 )
 
@@ -65,15 +65,25 @@ type RpcHandler func(funcID int32, args []byte) ([]byte, error)
 
 func (srv *RpcServer) Serve(handler RpcHandler) {
 	for msg := range srv.msgs {
-		var desc CallDesc
-		err := desc.Unmarshal(msg.Body)
+		var req Request
+		err := req.Unmarshal(msg.Body)
 		if err != nil {
-			panic("Something wrong!!!")
+			panic(fmt.Sprintf("Failed unmarshal request: %v", err))
 		}
 
-		resp, err := handler(desc.FuncID, desc.Msg)
+		var resp Response
+		data, err := handler(req.FuncID, req.Body)
 		if err != nil {
-			panic("Do something")
+			resp.IsSuccess = false
+			resp.ErrText = err.Error()
+		} else {
+			resp.IsSuccess = true
+			resp.Body = data
+		}
+
+		respData, err := resp.Marshal()
+		if err != nil {
+			panic(fmt.Sprintf("Failed marshall responce: %v", err))
 		}
 
 		err = srv.channel.Publish(
@@ -84,11 +94,11 @@ func (srv *RpcServer) Serve(handler RpcHandler) {
 			amqp.Publishing{
 				ContentType:   "application/octet-stream",
 				CorrelationId: msg.CorrelationId,
-				Body:          resp,
+				Body:          respData,
 			})
 
 		if err != nil {
-			panic("error: Failed to publish a message")
+			panic(fmt.Sprint("Failed to publish a message: %v", err))
 		}
 
 		msg.Ack(false)

@@ -1,7 +1,13 @@
 syntax = "proto3";
 package rpc;
 
-message CallDesc {
+message Request {
   int32 FuncID = 1;
-  bytes Msg = 2;
+  bytes Body = 2;
+}
+
+message Response {
+  bool IsSuccess = 1;
+  bytes Body = 2;
+  string ErrText = 3; 
 }

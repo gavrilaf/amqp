@@ -26,7 +26,7 @@ func main() {
 		fmt.Printf("Ping result: %v\n", spew.Sdump(resp))
 	}
 
-	req := CreateUserRequest{
+	req1 := CreateUserRequest{
 		Username:     "user",
 		PasswordHash: "123456",
 		Device: &Device{
@@ -36,12 +36,22 @@ func main() {
 			Lang:   "es"},
 	}
 
-	fmt.Printf("Call CreateUser(%s)\n", spew.Sdump(req))
-	_, err = client.CreateUser(req)
+	fmt.Printf("Call CreateUser(%s)\n", spew.Sdump(req1))
+	idResp, err := client.CreateUser(req1)
 	if err != nil {
 		fmt.Printf("CreateUser error: %v\n", err)
 	} else {
-		fmt.Printf("CreateUser ok\n")
+		fmt.Printf("CreateUser ok, %s\n", spew.Sdump(idResp))
+	}
+
+	req2 := CreateAccountRequest{Currency: "USD"}
+
+	fmt.Printf("Call CreateAccount(%s)\n", spew.Sdump(req2))
+	idResp, err = client.CreateAccount(req2)
+	if err != nil {
+		fmt.Printf("CreateAccount error: %v\n", err)
+	} else {
+		fmt.Printf("CreateAccount ok, %s\n", spew.Sdump(idResp))
 	}
 
 	select {}
@@ -57,7 +67,7 @@ func (client rpcClient) Ping(p Empty) (*ServerPingResponse, error) {
 		return nil, err
 	}
 
-	respData, err := client.rpc.Call(rpc.CallDesc{FuncID: int32(Functions_Ping), Msg: request})
+	respData, err := client.rpc.Call(rpc.Request{FuncID: int32(Functions_Ping), Body: request})
 	if err != nil {
 		return nil, err
 	}
@@ -68,18 +78,35 @@ func (client rpcClient) Ping(p Empty) (*ServerPingResponse, error) {
 	return &resp, err
 }
 
-func (client rpcClient) CreateUser(p CreateUserRequest) (*Empty, error) {
+func (client rpcClient) CreateUser(p CreateUserRequest) (*IDResponse, error) {
 	request, err := p.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	respData, err := client.rpc.Call(rpc.CallDesc{FuncID: int32(Functions_CreateUser), Msg: request})
+	respData, err := client.rpc.Call(rpc.Request{FuncID: int32(Functions_CreateUser), Body: request})
 	if err != nil {
 		return nil, err
 	}
 
-	var resp Empty
+	var resp IDResponse
+	err = resp.Unmarshal(respData)
+
+	return &resp, err
+}
+
+func (client rpcClient) CreateAccount(p CreateAccountRequest) (*IDResponse, error) {
+	request, err := p.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	respData, err := client.rpc.Call(rpc.Request{FuncID: int32(Functions_CreateAccount), Body: request})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp IDResponse
 	err = resp.Unmarshal(respData)
 
 	return &resp, err

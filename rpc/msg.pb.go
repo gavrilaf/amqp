@@ -8,7 +8,8 @@
 		msg.proto
 
 	It has these top-level messages:
-		CallDesc
+		Request
+		Response
 */
 package rpc
 
@@ -29,34 +30,67 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type CallDesc struct {
+type Request struct {
 	FuncID int32  `protobuf:"varint,1,opt,name=FuncID,proto3" json:"FuncID,omitempty"`
-	Msg    []byte `protobuf:"bytes,2,opt,name=Msg,proto3" json:"Msg,omitempty"`
+	Body   []byte `protobuf:"bytes,2,opt,name=Body,proto3" json:"Body,omitempty"`
 }
 
-func (m *CallDesc) Reset()                    { *m = CallDesc{} }
-func (m *CallDesc) String() string            { return proto.CompactTextString(m) }
-func (*CallDesc) ProtoMessage()               {}
-func (*CallDesc) Descriptor() ([]byte, []int) { return fileDescriptorMsg, []int{0} }
+func (m *Request) Reset()                    { *m = Request{} }
+func (m *Request) String() string            { return proto.CompactTextString(m) }
+func (*Request) ProtoMessage()               {}
+func (*Request) Descriptor() ([]byte, []int) { return fileDescriptorMsg, []int{0} }
 
-func (m *CallDesc) GetFuncID() int32 {
+func (m *Request) GetFuncID() int32 {
 	if m != nil {
 		return m.FuncID
 	}
 	return 0
 }
 
-func (m *CallDesc) GetMsg() []byte {
+func (m *Request) GetBody() []byte {
 	if m != nil {
-		return m.Msg
+		return m.Body
 	}
 	return nil
 }
 
-func init() {
-	proto.RegisterType((*CallDesc)(nil), "rpc.CallDesc")
+type Response struct {
+	IsSuccess bool   `protobuf:"varint,1,opt,name=IsSuccess,proto3" json:"IsSuccess,omitempty"`
+	Body      []byte `protobuf:"bytes,2,opt,name=Body,proto3" json:"Body,omitempty"`
+	ErrText   string `protobuf:"bytes,3,opt,name=ErrText,proto3" json:"ErrText,omitempty"`
 }
-func (m *CallDesc) Marshal() (dAtA []byte, err error) {
+
+func (m *Response) Reset()                    { *m = Response{} }
+func (m *Response) String() string            { return proto.CompactTextString(m) }
+func (*Response) ProtoMessage()               {}
+func (*Response) Descriptor() ([]byte, []int) { return fileDescriptorMsg, []int{1} }
+
+func (m *Response) GetIsSuccess() bool {
+	if m != nil {
+		return m.IsSuccess
+	}
+	return false
+}
+
+func (m *Response) GetBody() []byte {
+	if m != nil {
+		return m.Body
+	}
+	return nil
+}
+
+func (m *Response) GetErrText() string {
+	if m != nil {
+		return m.ErrText
+	}
+	return ""
+}
+
+func init() {
+	proto.RegisterType((*Request)(nil), "rpc.Request")
+	proto.RegisterType((*Response)(nil), "rpc.Response")
+}
+func (m *Request) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -66,7 +100,7 @@ func (m *CallDesc) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *CallDesc) MarshalTo(dAtA []byte) (int, error) {
+func (m *Request) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -76,11 +110,51 @@ func (m *CallDesc) MarshalTo(dAtA []byte) (int, error) {
 		i++
 		i = encodeVarintMsg(dAtA, i, uint64(m.FuncID))
 	}
-	if len(m.Msg) > 0 {
+	if len(m.Body) > 0 {
 		dAtA[i] = 0x12
 		i++
-		i = encodeVarintMsg(dAtA, i, uint64(len(m.Msg)))
-		i += copy(dAtA[i:], m.Msg)
+		i = encodeVarintMsg(dAtA, i, uint64(len(m.Body)))
+		i += copy(dAtA[i:], m.Body)
+	}
+	return i, nil
+}
+
+func (m *Response) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Response) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.IsSuccess {
+		dAtA[i] = 0x8
+		i++
+		if m.IsSuccess {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i++
+	}
+	if len(m.Body) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintMsg(dAtA, i, uint64(len(m.Body)))
+		i += copy(dAtA[i:], m.Body)
+	}
+	if len(m.ErrText) > 0 {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintMsg(dAtA, i, uint64(len(m.ErrText)))
+		i += copy(dAtA[i:], m.ErrText)
 	}
 	return i, nil
 }
@@ -94,13 +168,30 @@ func encodeVarintMsg(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return offset + 1
 }
-func (m *CallDesc) Size() (n int) {
+func (m *Request) Size() (n int) {
 	var l int
 	_ = l
 	if m.FuncID != 0 {
 		n += 1 + sovMsg(uint64(m.FuncID))
 	}
-	l = len(m.Msg)
+	l = len(m.Body)
+	if l > 0 {
+		n += 1 + l + sovMsg(uint64(l))
+	}
+	return n
+}
+
+func (m *Response) Size() (n int) {
+	var l int
+	_ = l
+	if m.IsSuccess {
+		n += 2
+	}
+	l = len(m.Body)
+	if l > 0 {
+		n += 1 + l + sovMsg(uint64(l))
+	}
+	l = len(m.ErrText)
 	if l > 0 {
 		n += 1 + l + sovMsg(uint64(l))
 	}
@@ -120,7 +211,7 @@ func sovMsg(x uint64) (n int) {
 func sozMsg(x uint64) (n int) {
 	return sovMsg(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *CallDesc) Unmarshal(dAtA []byte) error {
+func (m *Request) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -143,10 +234,10 @@ func (m *CallDesc) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: CallDesc: wiretype end group for non-group")
+			return fmt.Errorf("proto: Request: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CallDesc: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: Request: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -170,7 +261,7 @@ func (m *CallDesc) Unmarshal(dAtA []byte) error {
 			}
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Msg", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Body", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -194,10 +285,140 @@ func (m *CallDesc) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Msg = append(m.Msg[:0], dAtA[iNdEx:postIndex]...)
-			if m.Msg == nil {
-				m.Msg = []byte{}
+			m.Body = append(m.Body[:0], dAtA[iNdEx:postIndex]...)
+			if m.Body == nil {
+				m.Body = []byte{}
 			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsg(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsg
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Response) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsg
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Response: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Response: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field IsSuccess", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.IsSuccess = bool(v != 0)
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Body", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthMsg
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Body = append(m.Body[:0], dAtA[iNdEx:postIndex]...)
+			if m.Body == nil {
+				m.Body = []byte{}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ErrText", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsg
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsg
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ErrText = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -328,12 +549,16 @@ var (
 func init() { proto.RegisterFile("msg.proto", fileDescriptorMsg) }
 
 var fileDescriptorMsg = []byte{
-	// 111 bytes of a gzipped FileDescriptorProto
+	// 164 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xcc, 0x2d, 0x4e, 0xd7,
-	0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x2e, 0x2a, 0x48, 0x56, 0x32, 0xe1, 0xe2, 0x70, 0x4e,
-	0xcc, 0xc9, 0x71, 0x49, 0x2d, 0x4e, 0x16, 0x12, 0xe3, 0x62, 0x73, 0x2b, 0xcd, 0x4b, 0xf6, 0x74,
-	0x91, 0x60, 0x54, 0x60, 0xd4, 0x60, 0x0d, 0x82, 0xf2, 0x84, 0x04, 0xb8, 0x98, 0x7d, 0x8b, 0xd3,
-	0x25, 0x98, 0x14, 0x18, 0x35, 0x78, 0x82, 0x40, 0x4c, 0x27, 0x81, 0x13, 0x8f, 0xe4, 0x18, 0x2f,
-	0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc6, 0x63, 0x39, 0x86, 0x24, 0x36, 0xb0, 0x99,
-	0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0xac, 0x5e, 0x3d, 0x27, 0x60, 0x00, 0x00, 0x00,
+	0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x2e, 0x2a, 0x48, 0x56, 0x32, 0xe5, 0x62, 0x0f, 0x4a,
+	0x2d, 0x2c, 0x4d, 0x2d, 0x2e, 0x11, 0x12, 0xe3, 0x62, 0x73, 0x2b, 0xcd, 0x4b, 0xf6, 0x74, 0x91,
+	0x60, 0x54, 0x60, 0xd4, 0x60, 0x0d, 0x82, 0xf2, 0x84, 0x84, 0xb8, 0x58, 0x9c, 0xf2, 0x53, 0x2a,
+	0x25, 0x98, 0x14, 0x18, 0x35, 0x78, 0x82, 0xc0, 0x6c, 0xa5, 0x30, 0x2e, 0x8e, 0xa0, 0xd4, 0xe2,
+	0x82, 0xfc, 0xbc, 0xe2, 0x54, 0x21, 0x19, 0x2e, 0x4e, 0xcf, 0xe2, 0xe0, 0xd2, 0xe4, 0xe4, 0xd4,
+	0xe2, 0x62, 0xb0, 0x56, 0x8e, 0x20, 0x84, 0x00, 0x36, 0xdd, 0x42, 0x12, 0x5c, 0xec, 0xae, 0x45,
+	0x45, 0x21, 0xa9, 0x15, 0x25, 0x12, 0xcc, 0x0a, 0x8c, 0x1a, 0x9c, 0x41, 0x30, 0xae, 0x93, 0xc0,
+	0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38, 0xe3, 0xb1, 0x1c,
+	0x43, 0x12, 0x1b, 0xd8, 0xb1, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x57, 0x78, 0xb5, 0x0c,
+	0xb9, 0x00, 0x00, 0x00,
 }

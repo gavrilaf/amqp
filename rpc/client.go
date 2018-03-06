@@ -82,7 +82,7 @@ func (client *RpcClient) Close() {
 	}
 }
 
-func (client *RpcClient) Call(p CallDesc) ([]byte, error) {
+func (client *RpcClient) Call(p Request) ([]byte, error) {
 	request, err := p.Marshal()
 	if err != nil {
 		return nil, err
@@ -114,7 +114,15 @@ func (client *RpcClient) Call(p CallDesc) ([]byte, error) {
 
 	select {
 	case <-rpcCall.done:
-		resData = rpcCall.data
+		var resp Response
+		resError = resp.Unmarshal(rpcCall.data)
+		if resError == nil {
+			if resp.IsSuccess {
+				resData = resp.Body
+			} else {
+				resError = errors.New(resp.ErrText)
+			}
+		}
 
 	case <-time.After(time.Millisecond * time.Duration(3)):
 		return nil, ErrTimeout

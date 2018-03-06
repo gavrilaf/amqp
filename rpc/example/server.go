@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gavrilaf/amqp/rpc"
+	"github.com/satori/go.uuid"
 )
 
 func failOnError(err error, msg string) {
@@ -31,6 +32,8 @@ func main() {
 			return handler.HandlePing(arg)
 		case Functions_CreateUser:
 			return handler.HandleCreateUser(arg)
+		case Functions_CreateAccount:
+			return handler.HandleCreateAccount(arg)
 		default:
 			return nil, errors.New("unknown function")
 		}
@@ -41,7 +44,8 @@ func main() {
 
 type Server interface {
 	Ping() (*ServerPingResponse, error)
-	CreateUser(user CreateUserRequest) (*Empty, error)
+	CreateUser(user CreateUserRequest) (*IDResponse, error)
+	CreateAccount(account CreateAccountRequest) (*IDResponse, error)
 }
 
 type serverImpl struct{}
@@ -51,9 +55,14 @@ func (p serverImpl) Ping() (*ServerPingResponse, error) {
 	return &ServerPingResponse{Status: 2}, nil
 }
 
-func (p serverImpl) CreateUser(user CreateUserRequest) (*Empty, error) {
+func (p serverImpl) CreateUser(user CreateUserRequest) (*IDResponse, error) {
 	fmt.Printf("Create user call: %v\n", spew.Sdump(user))
-	return &Empty{}, nil
+	return &IDResponse{ID: uuid.NewV4().String()}, nil
+}
+
+func (p serverImpl) CreateAccount(account CreateAccountRequest) (*IDResponse, error) {
+	fmt.Printf("Create account call: %v\n", spew.Sdump(account))
+	return nil, errors.New("Creating account error")
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -75,6 +84,21 @@ func (p serverImpl) HandleCreateUser(arg []byte) ([]byte, error) {
 	}
 
 	resp, err := p.CreateUser(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Marshal()
+}
+
+func (p serverImpl) HandleCreateAccount(arg []byte) ([]byte, error) {
+	var req CreateAccountRequest
+	err := req.Unmarshal(arg)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := p.CreateAccount(req)
 	if err != nil {
 		return nil, err
 	}

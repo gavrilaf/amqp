@@ -4,6 +4,7 @@ package main;
 enum Functions {
   Ping = 0;
   CreateUser = 1;
+  CreateAccount = 2;
 }
 
 message Empty {}
@@ -27,4 +28,8 @@ message CreateUserRequest {
   string username = 1;
   string passwordHash = 2;
   Device device = 3;
+}
+
+message CreateAccountRequest {
+  string currency = 1;
 }
