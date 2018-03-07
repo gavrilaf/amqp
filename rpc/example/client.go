@@ -48,7 +48,7 @@ func main() {
 	}
 
 	////////////////////////////////////////////////////////////////////
-	req2 := CreateAccountRequest{Currency: "USD"}
+	req2 := AccountRequest{Currency: "USD"}
 	fmt.Printf("Call CreateAccount(%s)\n", spew.Sdump(req2))
 
 	idResp, err = bridge.CreateAccount(req2)
@@ -56,6 +56,16 @@ func main() {
 		fmt.Printf("CreateAccount error: %v\n", err)
 	} else {
 		fmt.Printf("CreateAccount ok, %s\n", spew.Sdump(idResp))
+	}
+
+	////////////////////////////////////////////////////////////////////
+	fmt.Printf("Call FindAccount(%s)\n", spew.Sdump(req2))
+
+	idResp, err = bridge.FindAccount(req2)
+	if err != nil {
+		fmt.Printf("FindAccount error: %v\n", err)
+	} else {
+		fmt.Printf("FindAccount ok, %s\n", spew.Sdump(idResp))
 	}
 }
 
@@ -97,13 +107,30 @@ func (bridge Bridge) CreateUser(p CreateUserRequest) (*IDResponse, error) {
 	return &resp, err
 }
 
-func (bridge Bridge) CreateAccount(p CreateAccountRequest) (*IDResponse, error) {
+func (bridge Bridge) CreateAccount(p AccountRequest) (*IDResponse, error) {
 	request, err := p.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
 	respData, err := bridge.client.RemoteCall(rpc.Request{FuncID: int32(Functions_CreateAccount), Body: request})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp IDResponse
+	err = resp.Unmarshal(respData)
+
+	return &resp, err
+}
+
+func (bridge Bridge) FindAccount(p AccountRequest) (*IDResponse, error) {
+	request, err := p.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	respData, err := bridge.client.RemoteCall(rpc.Request{FuncID: int32(Functions_FindAccount), Body: request})
 	if err != nil {
 		return nil, err
 	}

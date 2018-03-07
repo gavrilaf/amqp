@@ -6,6 +6,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gavrilaf/amqp/rpc"
 	"github.com/satori/go.uuid"
+	"time"
 )
 
 func failOnError(err error, msg string) {
@@ -34,6 +35,8 @@ func main() {
 			return handler.HandleCreateUser(arg)
 		case Functions_CreateAccount:
 			return handler.HandleCreateAccount(arg)
+		case Functions_FindAccount:
+			return handler.HandleFindAccount(arg)
 		default:
 			return nil, errors.New("unknown function")
 		}
@@ -45,7 +48,8 @@ func main() {
 type Server interface {
 	Ping() (*ServerPingResponse, error)
 	CreateUser(user CreateUserRequest) (*IDResponse, error)
-	CreateAccount(account CreateAccountRequest) (*IDResponse, error)
+	CreateAccount(acc AccountRequest) (*IDResponse, error)
+	FindAccount(acc AccountRequest) (*IDResponse, error)
 }
 
 type serverImpl struct{}
@@ -60,9 +64,17 @@ func (p serverImpl) CreateUser(user CreateUserRequest) (*IDResponse, error) {
 	return &IDResponse{ID: uuid.NewV4().String()}, nil
 }
 
-func (p serverImpl) CreateAccount(account CreateAccountRequest) (*IDResponse, error) {
-	fmt.Printf("Create account call: %v\n", spew.Sdump(account))
+func (p serverImpl) CreateAccount(acc AccountRequest) (*IDResponse, error) {
+	fmt.Printf("Create account call: %v\n", spew.Sdump(acc))
 	return nil, errors.New("Creating account error")
+}
+
+func (p serverImpl) FindAccount(acc AccountRequest) (*IDResponse, error) {
+	fmt.Printf("Find account call: %v\n", spew.Sdump(acc))
+
+	// Simulate slow call
+	time.Sleep(time.Second * 2)
+	return &IDResponse{ID: uuid.NewV4().String()}, nil
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -92,13 +104,28 @@ func (p serverImpl) HandleCreateUser(arg []byte) ([]byte, error) {
 }
 
 func (p serverImpl) HandleCreateAccount(arg []byte) ([]byte, error) {
-	var req CreateAccountRequest
+	var req AccountRequest
 	err := req.Unmarshal(arg)
 	if err != nil {
 		return nil, err
 	}
 
 	resp, err := p.CreateAccount(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Marshal()
+}
+
+func (p serverImpl) HandleFindAccount(arg []byte) ([]byte, error) {
+	var req AccountRequest
+	err := req.Unmarshal(arg)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := p.FindAccount(req)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,7 @@ enum Functions {
   Ping = 0;
   CreateUser = 1;
   CreateAccount = 2;
+  FindAccount = 3;
 }
 
 message Empty {}
@@ -30,6 +31,6 @@ message CreateUserRequest {
   Device device = 3;
 }
 
-message CreateAccountRequest {
+message AccountRequest {
   string currency = 1;
 }
