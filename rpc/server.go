@@ -98,7 +98,7 @@ func (srv *RpcServer) Serve(handler RpcHandler) {
 			})
 
 		if err != nil {
-			panic(fmt.Sprint("Failed to publish a message: %v", err))
+			panic(fmt.Sprint("Failed to publish a message: %s", err))
 		}
 
 		msg.Ack(false)
