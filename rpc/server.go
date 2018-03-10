@@ -5,14 +5,14 @@ import (
 	"github.com/streadway/amqp"
 )
 
-type RpcServer struct {
+type Server struct {
 	conn    *amqp.Connection
 	channel *amqp.Channel
 	msgs    <-chan amqp.Delivery
 	done    chan bool
 }
 
-func CreateRpcServer(url string, queueName string) (*RpcServer, error) {
+func CreateServer(url string, queueName string) (*Server, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -58,12 +58,12 @@ func CreateRpcServer(url string, queueName string) (*RpcServer, error) {
 		return nil, err
 	}
 
-	return &RpcServer{conn: conn, channel: ch, msgs: msgs, done: make(chan bool)}, nil
+	return &Server{conn: conn, channel: ch, msgs: msgs, done: make(chan bool)}, nil
 }
 
-type RpcHandler func(funcID int32, args []byte) ([]byte, error)
+type ServerHandler func(funcID int32, args []byte) ([]byte, error)
 
-func (srv *RpcServer) Serve(handler RpcHandler) {
+func (srv *Server) Serve(handler ServerHandler) {
 	for msg := range srv.msgs {
 		var req Request
 		err := req.Unmarshal(msg.Body)
