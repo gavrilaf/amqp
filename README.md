@@ -9,6 +9,7 @@ Firstly you have to run RabbitMQ locally or from Docker image
 Run amqp/examples/rpc-test-srv
 
 `go run server.go messages.pb.go messages_mqrpc.gen.go`
+
 `go run client.go messages.pb.go messages_mqrpc.gen.go`
 
 
