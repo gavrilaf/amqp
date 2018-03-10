@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package main;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.stringer_all) =  true;;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+service TestService {
+  rpc Ping (Empty) returns (ServerStatus);
+  rpc CreateUser(User) returns (ResourceID);
+  rpc CreateAccount(Account) returns (ResourceID);
+  rpc FindAccount(ResourceID) returns (Account);
+}
+
+message Empty {}
+
+message ResourceID {
+  string ID = 1;
+}
+
+message ServerStatus {
+  int32 status = 1; 
+}
+
+message Device {
+  string ID = 1;
+  string name = 2;
+  string locale = 3;
+  string lang = 4; 
+}
+
+message User {
+  string username = 1;
+  string passwordHash = 2;
+  Device device = 3; 
+}
+
+message Account {
+  string ID = 1;
+  string currency = 2;
+  bool locked = 3; 
+}
