@@ -15,7 +15,7 @@ func failOnError(err error, msg string) {
 }
 
 type Res struct {
-	req *Request
+	req Request
 	ans *Answer
 	err error
 }
@@ -39,7 +39,7 @@ func main() {
 		Request{Left: 9000, Right: 9000, Op: "()"},
 	}
 
-	//answers := make([]Res, len(requests))
+	answers := make([]Res, len(requests))
 
 	srv, err := rpc.Connect(rpc.ClientConfig{Url: "amqp://localhost:5672", ServerQueue: "rpc-rabbit-worker", Timeout: time.Second})
 	failOnError(err, "Connect")
@@ -53,14 +53,13 @@ func main() {
 		go func(i int, r Request) {
 			defer wg.Done()
 			answer, err := client.Eval(&r)
-			fmt.Printf("%d: -> %s -> %s, error = %v\n", i, r.String(), answer.String(), err)
-			//answers[indx] = Res{req: req, ans: answer, err: err}
+			answers[i] = Res{req: r, ans: answer, err: err}
 		}(indx, req)
 	}
 
 	wg.Wait()
 
-	//for _, r := range answers {
-	//	fmt.Printf("%s -> %s, error = %v\n", r.req, r.ans, r.err)
-	//}
+	for i, r := range answers {
+		fmt.Printf("%d: %s -> %s, error = %v\n", i, r.req.String(), r.ans.String(), r.err)
+	}
 }

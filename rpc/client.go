@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/satori/go.uuid"
 	"github.com/streadway/amqp"
+	"sync"
 	"time"
 )
 
@@ -66,15 +67,14 @@ func Connect(cfg ClientConfig) (Client, error) {
 ///////////////////////////////////////////////////////////////////////////////////
 
 type clientImpl struct {
-	serverQueue string
 	conn        *amqp.Connection
 	channel     *amqp.Channel
 	queue       *amqp.Queue
-
-	timeout time.Duration
-	calls   map[string]*pendingCall
-
-	done chan bool
+	serverQueue string
+	guard       sync.Mutex
+	calls       map[string]*pendingCall
+	timeout     time.Duration
+	done        chan bool
 }
 
 type pendingCall struct {
@@ -88,8 +88,8 @@ func newClient(serverQueue string, conn *amqp.Connection, channel *amqp.Channel,
 		conn:        conn,
 		channel:     channel,
 		queue:       queue,
-		timeout:     timeout,
 		calls:       make(map[string]*pendingCall),
+		timeout:     timeout,
 		done:        make(chan bool)}
 }
 
@@ -134,7 +134,10 @@ func (client *clientImpl) RemoteCall(p Request) ([]byte, error) {
 	}
 
 	call := &pendingCall{done: make(chan bool)}
+
+	client.guard.Lock()
 	client.calls[corrId] = call
+	client.guard.Unlock()
 
 	var respData []byte
 	var respError error = ErrTimeout
@@ -155,7 +158,9 @@ func (client *clientImpl) RemoteCall(p Request) ([]byte, error) {
 		break
 	}
 
+	client.guard.Lock()
 	delete(client.calls, corrId)
+	client.guard.Unlock()
 
 	return respData, respError
 }
