@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gavrilaf/amqp/rpc"
+	"sync"
 	"time"
 )
 
@@ -11,6 +12,12 @@ func failOnError(err error, msg string) {
 		fmt.Printf("%s: %s\n", msg, err)
 		panic(fmt.Sprintf("%s: %s", msg, err))
 	}
+}
+
+type Res struct {
+	req *Request
+	ans *Answer
+	err error
 }
 
 func main() {
@@ -32,13 +39,28 @@ func main() {
 		Request{Left: 9000, Right: 9000, Op: "()"},
 	}
 
+	//answers := make([]Res, len(requests))
+
 	srv, err := rpc.Connect(rpc.ClientConfig{Url: "amqp://localhost:5672", ServerQueue: "rpc-rabbit-worker", Timeout: time.Second})
 	failOnError(err, "Connect")
 
 	client := NewCalcClient(srv)
 
-	for _, req := range requests {
-		answer, err := client.Eval(&req)
-		fmt.Printf("%s : (%s: %v) \n", req.String(), answer.String(), err)
+	var wg sync.WaitGroup
+	wg.Add(len(requests))
+
+	for indx, req := range requests {
+		go func(i int, r Request) {
+			defer wg.Done()
+			answer, err := client.Eval(&r)
+			fmt.Printf("%d: -> %s -> %s, error = %v\n", i, r.String(), answer.String(), err)
+			//answers[indx] = Res{req: req, ans: answer, err: err}
+		}(indx, req)
 	}
+
+	wg.Wait()
+
+	//for _, r := range answers {
+	//	fmt.Printf("%s -> %s, error = %v\n", r.req, r.ans, r.err)
+	//}
 }

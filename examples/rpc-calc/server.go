@@ -29,25 +29,20 @@ type calcHandler struct{}
 func (p calcHandler) Eval(arg *Request) (*Answer, error) {
 	fmt.Printf("Eval: %s\n", arg.String())
 
-	var res float32
-	var err error
-
 	switch arg.Op {
 	case "+":
-		res = arg.Left + arg.Right
+		return &Answer{Result: arg.Left + arg.Right}, nil
 	case "-":
-		res = arg.Left - arg.Right
+		return &Answer{Result: arg.Left - arg.Right}, nil
 	case "*":
-		res = arg.Left * arg.Right
+		return &Answer{Result: arg.Left * arg.Right}, nil
 	case "/":
 		if arg.Right == 0.0 {
-			err = errors.New("divide by 0")
+			return nil, errors.New("divide by 0")
 		} else {
-			res = arg.Left / arg.Right
+			return &Answer{Result: arg.Left / arg.Right}, nil
 		}
 	default:
-		err = errors.New("unkown function")
+		return nil, errors.New("unkown function")
 	}
-
-	return &Answer{Result: res, Req: arg}, err
 }

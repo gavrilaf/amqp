@@ -19,5 +19,4 @@ message Request {
 
 message Answer {
     float Result = 1;
-    Request Req = 2;
 }
