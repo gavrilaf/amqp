@@ -22,11 +22,11 @@ func (p testSrv) GenErr(arg *Empty) (*Empty, error) {
 	return nil, errTest
 }
 
-func runSrv(t *testing.T) *rpc.Server {
+func runSrv(t *testing.T) rpc.Server {
 	srv, err := rpc.CreateServer("amqp://localhost:5672", "rpc-test-worker")
 	require.Nil(t, err, "Couldn't create server")
 
-	go func(s *rpc.Server) {
+	go func(s rpc.Server) {
 		RunServer(s, &testSrv{})
 	}(srv)
 

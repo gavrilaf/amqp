@@ -31,7 +31,7 @@ type CalcServer interface {
 }
 
 // Run server API with this call
-func RunServer(srv *rpc.Server, handler CalcServer) {
+func RunServer(srv rpc.Server, handler CalcServer) {
 	srv.Serve(func(funcID int32, arg []byte) ([]byte, error) {
 		switch funcID {
 		case Functions_Eval:

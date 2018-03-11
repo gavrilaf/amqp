@@ -48,7 +48,7 @@ func (p *mqrpc) Generate(file *generator.FileDescriptor) {
 		p.P(`}`)
 
 		p.P(`// Run server API with this call`)
-		p.P(`func RunServer(srv *rpc.Server, handler `, serverInterfaceName, `) {`)
+		p.P(`func RunServer(srv rpc.Server, handler `, serverInterfaceName, `) {`)
 		p.In()
 		p.P(`srv.Serve(func(funcID int32, arg []byte) ([]byte, error) {`)
 		p.In()

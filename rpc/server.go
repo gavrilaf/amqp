@@ -5,14 +5,14 @@ import (
 	"github.com/streadway/amqp"
 )
 
-type Server struct {
-	conn    *amqp.Connection
-	channel *amqp.Channel
-	msgs    <-chan amqp.Delivery
-	done    chan bool
+type CallHandler func(funcID int32, args []byte) ([]byte, error)
+
+type Server interface {
+	Close()
+	Serve(handler CallHandler)
 }
 
-func CreateServer(url string, queueName string) (*Server, error) {
+func CreateServer(url string, queueName string) (Server, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -58,12 +58,33 @@ func CreateServer(url string, queueName string) (*Server, error) {
 		return nil, err
 	}
 
-	return &Server{conn: conn, channel: ch, msgs: msgs, done: make(chan bool)}, nil
+	return &serverImpl{conn: conn, channel: ch, msgs: msgs, done: make(chan bool)}, nil
 }
 
-type CallHandler func(funcID int32, args []byte) ([]byte, error)
+type serverImpl struct {
+	conn    *amqp.Connection
+	channel *amqp.Channel
+	msgs    <-chan amqp.Delivery
+	done    chan bool
+}
 
-func (srv *Server) Serve(handler CallHandler) {
+func (srv *serverImpl) Close() {
+	if srv == nil {
+		return
+	}
+
+	srv.done <- true
+
+	if srv.channel != nil {
+		srv.channel.Close()
+	}
+
+	if srv.conn != nil {
+		srv.conn.Close()
+	}
+}
+
+func (srv *serverImpl) Serve(handler CallHandler) {
 	for msg := range srv.msgs {
 		var req Request
 		err := req.Unmarshal(msg.Body)

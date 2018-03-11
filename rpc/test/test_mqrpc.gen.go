@@ -32,7 +32,7 @@ type TestServer interface {
 }
 
 // Run server API with this call
-func RunServer(srv *rpc.Server, handler TestServer) {
+func RunServer(srv rpc.Server, handler TestServer) {
 	srv.Serve(func(funcID int32, arg []byte) ([]byte, error) {
 		switch funcID {
 		case Functions_CopySimple:
