@@ -1,6 +1,15 @@
 RPC implementation over RabbitMQ
 
-Run example
+# Installation
+
+Install the standard protocol buffer implementation from https://github.com/google/protobuf.
+Install the gogo golang protobuf implementation from https://github.com/gogo/protobuf.
+
+Install mq-rpc binary:
+
+`go get github.com/gavrilaf/amqp/protoc-gen-mqrpc`
+
+# Run example
 
 Firstly you have to run RabbitMQ locally or from Docker image
 
