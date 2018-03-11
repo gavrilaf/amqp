@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package main;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+service Calc {
+  rpc Eval(Request) returns (Answer);
+}
+
+message Request {
+    float Left = 1;
+    float Right = 2;
+    string Op = 3;
+}
+
+message Answer {
+    float Result = 1;
+    Request Req = 2;
+}
