@@ -61,9 +61,9 @@ func CreateServer(url string, queueName string) (*Server, error) {
 	return &Server{conn: conn, channel: ch, msgs: msgs, done: make(chan bool)}, nil
 }
 
-type ServerHandler func(funcID int32, args []byte) ([]byte, error)
+type CallHandler func(funcID int32, args []byte) ([]byte, error)
 
-func (srv *Server) Serve(handler ServerHandler) {
+func (srv *Server) Serve(handler CallHandler) {
 	for msg := range srv.msgs {
 		var req Request
 		err := req.Unmarshal(msg.Body)
@@ -98,7 +98,7 @@ func (srv *Server) Serve(handler ServerHandler) {
 			})
 
 		if err != nil {
-			panic(fmt.Sprint("Failed to publish a message: %s", err))
+			panic(fmt.Sprintf("Failed to publish a message: %v", err))
 		}
 
 		msg.Ack(false)
