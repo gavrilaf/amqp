@@ -85,43 +85,53 @@ func (srv *serverImpl) Close() {
 }
 
 func (srv *serverImpl) Serve(handler CallHandler) {
-	for msg := range srv.msgs {
-		var req Request
-		err := req.Unmarshal(msg.Body)
-		if err != nil {
-			panic(fmt.Sprintf("Failed unmarshal request: %v", err))
+	finish := false
+	for !finish {
+		select {
+		case msg := <-srv.msgs:
+			srv.callHandler(handler, msg)
+		case <-srv.done:
+			finish = true
 		}
-
-		var resp Response
-		data, err := handler(req.FuncID, req.Body)
-		if err != nil {
-			resp.IsSuccess = false
-			resp.ErrText = err.Error()
-		} else {
-			resp.IsSuccess = true
-			resp.Body = data
-		}
-
-		respData, err := resp.Marshal()
-		if err != nil {
-			panic(fmt.Sprintf("Failed marshall responce: %v", err))
-		}
-
-		err = srv.channel.Publish(
-			"",          // exchange
-			msg.ReplyTo, // routing key
-			false,       // mandatory
-			false,       // immediate
-			amqp.Publishing{
-				ContentType:   "application/octet-stream",
-				CorrelationId: msg.CorrelationId,
-				Body:          respData,
-			})
-
-		if err != nil {
-			panic(fmt.Sprintf("Failed to publish a message: %v", err))
-		}
-
-		msg.Ack(false)
 	}
+}
+
+func (srv *serverImpl) callHandler(handler CallHandler, msg amqp.Delivery) {
+	var req Request
+	err := req.Unmarshal(msg.Body)
+	if err != nil {
+		panic(fmt.Sprintf("Failed unmarshal request: %v", err))
+	}
+
+	var resp Response
+	data, err := handler(req.FuncID, req.Body)
+	if err != nil {
+		resp.IsSuccess = false
+		resp.ErrText = err.Error()
+	} else {
+		resp.IsSuccess = true
+		resp.Body = data
+	}
+
+	respData, err := resp.Marshal()
+	if err != nil {
+		panic(fmt.Sprintf("Failed marshall responce: %v", err))
+	}
+
+	err = srv.channel.Publish(
+		"",          // exchange
+		msg.ReplyTo, // routing key
+		false,       // mandatory
+		false,       // immediate
+		amqp.Publishing{
+			ContentType:   "application/octet-stream",
+			CorrelationId: msg.CorrelationId,
+			Body:          respData,
+		})
+
+	if err != nil {
+		panic(fmt.Sprintf("Failed to publish a message: %v", err))
+	}
+
+	msg.Ack(false)
 }
