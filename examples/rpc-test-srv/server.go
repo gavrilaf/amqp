@@ -21,6 +21,8 @@ func main() {
 	srv, err := rpc.CreateServer("amqp://localhost:5672", "rpc-rabbit-worker")
 	failOnError(err, "RabbitMQ connection")
 
+	defer srv.Close()
+
 	RunServer(srv, &srvHandler{})
 }
 

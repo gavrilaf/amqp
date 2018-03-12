@@ -57,6 +57,7 @@ func RunServer(srv rpc.Server, handler TestServiceServer) {
 
 // Client API
 type TestServiceClient interface {
+	Close()
 	Ping(arg *Empty) (*ServerStatus, error)
 	CreateUser(arg *User) (*ResourceID, error)
 	CreateAccount(arg *Account) (*ResourceID, error)
@@ -130,6 +131,9 @@ func _Handle_FindAccount(handler interface{}, arg []byte) ([]byte, error) {
 }
 
 // Client API handlers
+func (this *testServiceClient) Close() {
+	this.cc.Close()
+}
 func (this *testServiceClient) Ping(arg *Empty) (*ServerStatus, error) {
 	request, err := arg.Marshal()
 	if err != nil {

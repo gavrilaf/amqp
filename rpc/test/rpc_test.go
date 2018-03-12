@@ -34,19 +34,19 @@ func runSrv(t *testing.T) rpc.Server {
 	return srv
 }
 
-func clientConnect(t *testing.T) (TestClient, rpc.Client) {
+func clientConnect(t *testing.T) TestClient {
 	cc, err := rpc.Connect(rpc.ClientConfig{Url: "amqp://localhost:5672", ServerQueue: "rpc-test-worker", Timeout: time.Second})
 	require.Nil(t, err, "Couldn't connect client")
 
-	return NewTestClient(cc), cc
+	return NewTestClient(cc)
 }
 
 func Test_OpenClose(t *testing.T) {
 	srv := runSrv(t)
 	defer srv.Close()
 
-	_, cc := clientConnect(t)
-	defer cc.Close()
+	client := clientConnect(t)
+	defer client.Close()
 
 	assert.True(t, true)
 }
@@ -55,8 +55,8 @@ func Test_CopySimple(t *testing.T) {
 	srv := runSrv(t)
 	defer srv.Close()
 
-	client, cc := clientConnect(t)
-	defer cc.Close()
+	client := clientConnect(t)
+	defer client.Close()
 
 	arg := SimpleTypes{Number: 12, Str: "String", Logic: true}
 	res, err := client.CopySimple(&arg)
@@ -69,8 +69,8 @@ func Test_Error(t *testing.T) {
 	srv := runSrv(t)
 	defer srv.Close()
 
-	client, cc := clientConnect(t)
-	defer cc.Close()
+	client := clientConnect(t)
+	defer client.Close()
 
 	res, err := client.GenErr(&Empty{})
 	assert.Nil(t, res)
@@ -83,8 +83,8 @@ func Test_Multichannel(t *testing.T) {
 	srv := runSrv(t)
 	defer srv.Close()
 
-	client, cc := clientConnect(t)
-	defer cc.Close()
+	client := clientConnect(t)
+	defer client.Close()
 
 	count := 40
 	reqs := make([]SimpleTypes, count)

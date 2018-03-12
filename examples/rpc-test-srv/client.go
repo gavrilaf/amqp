@@ -20,6 +20,7 @@ func main() {
 	failOnError(err, "Connect")
 
 	client := NewTestServiceClient(srv)
+	defer client.Close()
 
 	status, err := client.Ping(&Empty{})
 	fmt.Printf("Ping, result = %s, error = %v\n", status.String(), err)

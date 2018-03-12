@@ -47,6 +47,7 @@ func RunServer(srv rpc.Server, handler TestServer) {
 
 // Client API
 type TestClient interface {
+	Close()
 	CopySimple(arg *SimpleTypes) (*SimpleTypes, error)
 	GenErr(arg *Empty) (*Empty, error)
 }
@@ -92,6 +93,9 @@ func _Handle_GenErr(handler interface{}, arg []byte) ([]byte, error) {
 }
 
 // Client API handlers
+func (this *testClient) Close() {
+	this.cc.Close()
+}
 func (this *testClient) CopySimple(arg *SimpleTypes) (*SimpleTypes, error) {
 	request, err := arg.Marshal()
 	if err != nil {

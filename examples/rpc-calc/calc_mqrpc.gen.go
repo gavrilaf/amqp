@@ -44,6 +44,7 @@ func RunServer(srv rpc.Server, handler CalcServer) {
 
 // Client API
 type CalcClient interface {
+	Close()
 	Eval(arg *Request) (*Answer, error)
 }
 
@@ -75,6 +76,9 @@ func _Handle_Eval(handler interface{}, arg []byte) ([]byte, error) {
 }
 
 // Client API handlers
+func (this *calcClient) Close() {
+	this.cc.Close()
+}
 func (this *calcClient) Eval(arg *Request) (*Answer, error) {
 	request, err := arg.Marshal()
 	if err != nil {

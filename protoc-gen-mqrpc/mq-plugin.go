@@ -73,6 +73,7 @@ func (p *mqrpc) Generate(file *generator.FileDescriptor) {
 		clientInterfaceName := service.GetName() + "Client"
 		p.P(`type `, clientInterfaceName, ` interface {`)
 		p.In()
+		p.P("Close()")
 		for _, method := range service.GetMethod() {
 			methodName := method.GetName()
 			argType := p.typeName(method.GetInputType())
@@ -123,6 +124,12 @@ func (p *mqrpc) Generate(file *generator.FileDescriptor) {
 		}
 
 		p.P(`// Client API handlers`)
+		p.P(`func (this *`, unexport(clientInterfaceName), `) Close() {`)
+		p.In()
+		p.P(`this.cc.Close()`)
+		p.Out()
+		p.P(`}`)
+
 		for _, method := range service.GetMethod() {
 			methodName := method.GetName()
 			argType := p.typeName(method.GetInputType())
