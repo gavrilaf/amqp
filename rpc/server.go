@@ -89,7 +89,7 @@ func (srv *serverImpl) Serve(handler CallHandler) {
 	for !finish {
 		select {
 		case msg := <-srv.msgs:
-			srv.callHandler(handler, msg)
+			go srv.callHandler(handler, msg)
 		case <-srv.done:
 			finish = true
 		}

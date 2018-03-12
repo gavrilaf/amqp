@@ -86,7 +86,7 @@ func Test_Multichannel(t *testing.T) {
 	client := clientConnect(t)
 	defer client.Close()
 
-	count := 40
+	count := 100
 	reqs := make([]SimpleTypes, count)
 	answers := make([]SimpleTypes, count)
 
