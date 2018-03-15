@@ -23,6 +23,11 @@ func (p testSrv) GenErr(arg *Empty) (*Empty, error) {
 	return nil, errTest
 }
 
+func (p testSrv) CopyComplex(arg *ComplexTypes) (*ComplexTypes, error) {
+	copy := *arg
+	return &copy, nil
+}
+
 func runSrv(t *testing.T) rpc.Server {
 	srv, err := rpc.CreateServer("amqp://localhost:5672", "rpc-test-worker")
 	require.Nil(t, err, "Couldn't create server")
@@ -77,6 +82,23 @@ func Test_Error(t *testing.T) {
 	assert.NotNil(t, err)
 
 	assert.Equal(t, err.Error(), errTest.Error())
+}
+
+func Test_CopyComplex(t *testing.T) {
+	srv := runSrv(t)
+	defer srv.Close()
+
+	client := clientConnect(t)
+	defer client.Close()
+
+	arr := []int32{1, 2, 3, 4, 5}
+	dict := map[int32]string{1: "one", 2: "two", 3: "three"}
+
+	arg := ComplexTypes{Array: arr, Dict: dict}
+	res, err := client.CopyComplex(&arg)
+
+	assert.Nil(t, err)
+	assert.True(t, arg.Equal(res))
 }
 
 func Test_Multichannel(t *testing.T) {

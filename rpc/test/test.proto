@@ -8,15 +8,21 @@ option (gogoproto.marshaler_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 
 service Test {
-  rpc CopySimple (SimpleTypes) returns (SimpleTypes);
-  rpc GenErr(Empty) returns (Empty);
+    rpc CopySimple (SimpleTypes) returns (SimpleTypes);
+    rpc GenErr(Empty) returns (Empty);
+    rpc CopyComplex (ComplexTypes) returns (ComplexTypes);
 }
 
 message Empty {}
 
 message SimpleTypes {
-  int32 number = 1;
-  string str = 2;
-  bool logic = 3;
+    int32 number = 1;
+    string str = 2;
+    bool logic = 3;
+}
+
+message ComplexTypes {
+    repeated int32 array = 2;
+    map<int32, string> dict = 3;
 }
 

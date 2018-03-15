@@ -10,6 +10,7 @@
 	It has these top-level messages:
 		Empty
 		SimpleTypes
+		ComplexTypes
 */
 package test
 
@@ -29,6 +30,7 @@ var _ = math.Inf
 type TestServer interface {
 	CopySimple(arg *SimpleTypes) (*SimpleTypes, error)
 	GenErr(arg *Empty) (*Empty, error)
+	CopyComplex(arg *ComplexTypes) (*ComplexTypes, error)
 }
 
 // Run server API with this call
@@ -39,6 +41,8 @@ func RunServer(srv rpc.Server, handler TestServer) {
 			return _Handle_CopySimple(handler, arg)
 		case Functions_GenErr:
 			return _Handle_GenErr(handler, arg)
+		case Functions_CopyComplex:
+			return _Handle_CopyComplex(handler, arg)
 		default:
 			return nil, errors.New(fmt.Sprintf("unknown function with code: %d", funcID))
 		}
@@ -50,6 +54,7 @@ type TestClient interface {
 	Close()
 	CopySimple(arg *SimpleTypes) (*SimpleTypes, error)
 	GenErr(arg *Empty) (*Empty, error)
+	CopyComplex(arg *ComplexTypes) (*ComplexTypes, error)
 }
 
 func NewTestClient(cc rpc.Client) TestClient {
@@ -62,8 +67,9 @@ type testClient struct {
 
 // Functions enum
 const (
-	Functions_CopySimple int32 = 0
-	Functions_GenErr     int32 = 1
+	Functions_CopySimple  int32 = 0
+	Functions_GenErr      int32 = 1
+	Functions_CopyComplex int32 = 2
 )
 
 // Server API handlers
@@ -86,6 +92,18 @@ func _Handle_GenErr(handler interface{}, arg []byte) ([]byte, error) {
 		return nil, err
 	}
 	resp, err := handler.(TestServer).GenErr(&req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Marshal()
+}
+func _Handle_CopyComplex(handler interface{}, arg []byte) ([]byte, error) {
+	var req ComplexTypes
+	err := req.Unmarshal(arg)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := handler.(TestServer).CopyComplex(&req)
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +137,19 @@ func (this *testClient) GenErr(arg *Empty) (*Empty, error) {
 		return nil, err
 	}
 	var resp Empty
+	err = resp.Unmarshal(respData)
+	return &resp, err
+}
+func (this *testClient) CopyComplex(arg *ComplexTypes) (*ComplexTypes, error) {
+	request, err := arg.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	respData, err := this.cc.RemoteCall(rpc.Request{FuncID: Functions_CopyComplex, Body: request})
+	if err != nil {
+		return nil, err
+	}
+	var resp ComplexTypes
 	err = resp.Unmarshal(respData)
 	return &resp, err
 }
